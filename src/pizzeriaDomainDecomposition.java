@@ -7,7 +7,11 @@ public class pizzeriaDomainDecomposition {
 
     public static void main(String[] args) {
 
+        OrderManager.start();
+
         var order = OrderManager.startOrder();
+
+        order.addPizza(null, null, null, null);
         order.addPizza(10L, null, null, null);
         order.addPizza(12L, "MARGARITA", null, null);
         order.addPizza(9L, "Pepperoni", null, true);
@@ -45,7 +49,5 @@ public class pizzeriaDomainDecomposition {
         order2.showPizzas();
 
         order2.showPizzaInfoByName("Liza's pizza");
-
-
     }
 }

@@ -9,8 +9,8 @@ public class CustomExceptions {
     }
 
     public static class NotProperPizzaName extends RuntimeException {
-        public NotProperPizzaName(String errorMessage) {
-            super(errorMessage);
+        public NotProperPizzaName(String message) {
+            super(message);
         }
     }
 
