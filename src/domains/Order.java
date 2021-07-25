@@ -1,10 +1,13 @@
 package domains;
 
-import Exceptions.CustomExceptions;
+import Exceptions.NotFoundPizzaException;
+import Exceptions.NotProperPizzaName;
+import Exceptions.ValueOutOfBounds;
 import service.OrderManager;
 
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static helpers.Helpers.generateFiveDigitNumber;
@@ -16,7 +19,7 @@ public class Order {
 
     private final long clientId;
     private final long orderId;
-    private ArrayList<OrderItem> orderItems;
+    private List<OrderItem> orderItems;
     private double sum = 0.0;
 
     public Order(Client client) {
@@ -36,17 +39,17 @@ public class Order {
     public void showPizzaInfoByName(String name) {
         try {
             showPizza(getPizzaByName(name));
-        } catch (CustomExceptions.NotFoundPizzaException ex) {
+        } catch (NotFoundPizzaException ex) {
             printError(ex.getMessage());
         }
     }
 
     //TODO: not working as I expected
-    private OrderItem getPizzaByName(String name) throws CustomExceptions.NotFoundPizzaException {
+    private OrderItem getPizzaByName(String name) throws NotFoundPizzaException {
         return orderItems.stream()
                 .filter(item -> item.getPizza().getName().equals(name))
                 .findFirst()
-                .orElseThrow(() -> new CustomExceptions.NotFoundPizzaException("Pizza with that name is not found"));
+                .orElseThrow(() -> new NotFoundPizzaException("Pizza with that name is not found"));
     }
 
 
@@ -55,15 +58,10 @@ public class Order {
     }
 
     private String getValidName(String name) {
-        try {
-            if (name.length() > MAX_PIZZA_NAME_LENGTH || name.length() < MIN_PIZZA_NAME_LENGTH) {
-                throw new CustomExceptions.NotProperPizzaName("Name length is more than 20 or less than 4 symbols. We add pizza with the default name.");
-            } else {
-                return name;
-            }
-        } catch (CustomExceptions.NotProperPizzaName ex) {
-            printError(ex.getMessage());
-            return geDefaultName();
+        if (name.length() > MAX_PIZZA_NAME_LENGTH || name.length() < MIN_PIZZA_NAME_LENGTH) {
+            throw new NotProperPizzaName("Name length is more than 20 or less than 4 symbols. We add pizza with the default name.");
+        } else {
+            return name;
         }
     }
 
@@ -71,31 +69,26 @@ public class Order {
         this.sum = orderItems.stream().mapToDouble(OrderItem::getSum).sum();
     }
 
-
     public void addPizza(Long count, String name, Set<Ingridients> ingridients, Boolean isCalzone) {
-        try {
-            var validCount = checkCount(count);
-            var validName = (name == null) ? geDefaultName() : getValidName(name);
-            var validIngridients = (ingridients == null) ? new HashSet<Ingridients>() : ingridients;
-            var validCalzone = isCalzone != null && isCalzone;
-            this.orderItems.add(
-                    new OrderItem(
-                            validCount,
-                            validName,
-                            validIngridients,
-                            validCalzone,
-                            this.orderId
-                    ));
-            setSum();
-            OrderManager.notifyPizzaAdded(validName, orderId);
-        } catch (CustomExceptions.ValueOutOfBounds ex) {
-            printError(ex.getMessage());
-        }
+        var validCount = checkCount(count);
+        var validName = (name == null) ? geDefaultName() : getValidName(name);
+        var validIngridients = (ingridients == null) ? new HashSet<Ingridients>() : ingridients;
+        var validCalzone = isCalzone != null && isCalzone;
+        this.orderItems.add(
+                new OrderItem(
+                        validCount,
+                        validName,
+                        validIngridients,
+                        validCalzone,
+                        this.orderId
+                ));
+        setSum();
+        OrderManager.notifyPizzaAdded(validName, orderId);
     }
 
-    private long checkCount(Long count) throws CustomExceptions.ValueOutOfBounds {
+    private long checkCount(Long count) throws ValueOutOfBounds {
         if (count == null || count > 10 || count < 0) {
-            throw new CustomExceptions.ValueOutOfBounds("Value is more than 10 or less than 0");
+            throw new ValueOutOfBounds("Value is more than 10 or less than 0");
         } else {
             return count;
         }
@@ -107,7 +100,7 @@ public class Order {
         System.out.printf("\nЧЕК\n*****\n");
         System.out.printf("Заказ: %d\n", this.orderId);
         System.out.printf("Клиент: %d\n", this.clientId);
-        orderItems.forEach((item) -> {
+        orderItems.forEach(item -> {
             System.out.printf("Название: %s\n", item.getPizza().getName());
             System.out.printf("-----\n");
             System.out.printf("\tPizza Base: %.2f\n", item.getPizza().getFullDoughSum());
